@@ -4,6 +4,10 @@ AI Log Analyzer is an MVP for communication board log investigation. It will
 reconstruct recent boot processes from scattered logs, classify boot outcomes,
 and support AI-assisted diagnosis with evidence-backed follow-up answers.
 
+## Feature Panorama
+
+![AI Log Analyzer feature panorama](docs/assets/ai-log-analyzer-feature-panorama.png)
+
 ## Backend
 
 ```powershell
