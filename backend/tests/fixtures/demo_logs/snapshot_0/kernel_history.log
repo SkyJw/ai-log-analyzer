@@ -1,0 +1,6 @@
+Linux version 6.1.0-comm-board
+Kernel command line: root=/dev/mmcblk0p2 boot_region=B
+sensor_driver 1-0048: probe failed with error -110
+i2c bus recovery timed out
+watchdog reset detected before userspace ready
+reboot: Restarting system

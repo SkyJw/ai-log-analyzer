@@ -1,0 +1,7 @@
+U-Boot 2026.01
+board: comm-board-a
+expected boot region: A
+selected boot region: B
+error: selected boot region differs from expected region after upgrade
+image validation: fallback image accepted
+Booting Linux from region B
