@@ -1,0 +1,23 @@
+id: kernel_history_log
+name: Kernel retained boot log
+path_patterns:
+  - "**/kernel_history*.log"
+  - "**/dmesg*.log"
+source_type: kernel
+parser: plain_text_log
+scope_strategy: multi_boot_split
+boot_split_markers:
+  - "Linux version"
+  - "Booting Linux"
+  - "Kernel command line"
+max_boot_sessions: 5
+max_size_mb: 20
+extractors:
+  - boot_stage
+  - error_keywords
+  - driver_probe_events
+  - bus_errors
+related_playbooks:
+  - kernel_boot_abnormal
+  - driver_probe_failure
+  - i2c_spi_mdio_bus_error

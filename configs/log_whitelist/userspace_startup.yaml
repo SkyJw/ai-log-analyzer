@@ -1,0 +1,16 @@
+id: userspace_startup_log
+name: Userspace startup log
+path_patterns:
+  - "**/startup*.log"
+  - "**/service*.log"
+source_type: userspace
+parser: plain_text_log
+scope_strategy: current_snapshot_only
+boot_split_markers: []
+max_boot_sessions: 1
+max_size_mb: 20
+extractors:
+  - service_startup
+  - error_keywords
+related_playbooks:
+  - userspace_service_startup
