@@ -116,6 +116,32 @@ docker-compose logs backend
 docker-compose logs frontend
 ```
 
+### WSL2 原生 Docker 验证
+
+如果 Windows Docker Desktop 不可用，但 WSL2 发行版内安装了原生 Docker，可以直接在 WSL2 中验证：
+
+```powershell
+wsl.exe -l -v
+wsl.exe -d <DistroName> -e bash -lc "docker --version && docker compose version"
+wsl.exe -d <DistroName> -e bash -lc "cd /mnt/e/Project/ai-log-analyzer && docker compose config"
+wsl.exe -d <DistroName> -e bash -lc "cd /mnt/e/Project/ai-log-analyzer && docker compose build"
+```
+
+如果 Windows 挂载目录中存在权限异常的测试缓存，例如 `backend/.pytest_cache` 或
+`backend/.pytest_tmp`，Docker build 可能在读取 build context 时失败。仓库的
+`.dockerignore` 已排除这些目录；若仍因历史缓存权限异常失败，可在一个干净 worktree
+或干净 clone 中执行 WSL2 构建验证。
+
+如果基础镜像拉取失败并出现 `TLS handshake timeout`，先确认 WSL2 Docker 的 registry
+或 mirror 网络可用，再重试：
+
+```powershell
+wsl.exe -d <DistroName> -e bash -lc "curl -I --connect-timeout 10 https://registry-1.docker.io/v2/ || true"
+wsl.exe -d <DistroName> -e bash -lc "docker pull python:3.12-slim"
+wsl.exe -d <DistroName> -e bash -lc "docker pull node:22-alpine"
+wsl.exe -d <DistroName> -e bash -lc "docker pull nginx:1.27-alpine"
+```
+
 上传 demo 日志包进行冒烟：
 
 ```powershell

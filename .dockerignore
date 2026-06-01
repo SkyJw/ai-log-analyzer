@@ -1,8 +1,12 @@
 .git
 .worktrees
 backend/.pytest_cache
+backend/.pytest_cache/
 backend/.pytest_tmp
+backend/.pytest_tmp/
+backend/.pytest_tmp*/
 backend/.ruff_cache
+backend/.ruff_cache/
 backend/data
 backend/*.egg-info
 backend/**/__pycache__
