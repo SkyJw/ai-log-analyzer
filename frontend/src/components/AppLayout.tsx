@@ -1,11 +1,15 @@
 import { Database, FilePlus2, ListChecks } from "lucide-react";
 import type { ReactNode } from "react";
 
+export type AppView = "tasks" | "new" | "cases";
+
 type AppLayoutProps = {
+  activeView?: AppView;
   children: ReactNode;
+  onNavigate?: (view: AppView) => void;
 };
 
-export function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout({ activeView = "tasks", children, onNavigate }: AppLayoutProps) {
   return (
     <div
       style={{
@@ -34,9 +38,24 @@ export function AppLayout({ children }: AppLayoutProps) {
             gap: "0.5rem",
           }}
         >
-          <NavItem icon={<ListChecks size={16} />} label="分析任务" />
-          <NavItem icon={<FilePlus2 size={16} />} label="新建分析" />
-          <NavItem icon={<Database size={16} />} label="已入库案例" />
+          <NavItem
+            active={activeView === "tasks"}
+            icon={<ListChecks size={16} />}
+            label="分析任务"
+            onClick={() => onNavigate?.("tasks")}
+          />
+          <NavItem
+            active={activeView === "new"}
+            icon={<FilePlus2 size={16} />}
+            label="新建分析"
+            onClick={() => onNavigate?.("new")}
+          />
+          <NavItem
+            active={activeView === "cases"}
+            icon={<Database size={16} />}
+            label="已入库案例"
+            onClick={() => onNavigate?.("cases")}
+          />
         </nav>
       </header>
       <main style={{ margin: "0 auto", maxWidth: "1180px", padding: "1.25rem" }}>{children}</main>
@@ -44,13 +63,25 @@ export function AppLayout({ children }: AppLayoutProps) {
   );
 }
 
-function NavItem({ icon, label }: { icon: ReactNode; label: string }) {
+function NavItem({
+  active,
+  icon,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
+      aria-current={active ? "page" : undefined}
+      onClick={onClick}
       style={{
         alignItems: "center",
-        background: "transparent",
+        background: active ? "rgba(255,255,255,0.16)" : "transparent",
         border: "1px solid rgba(255,255,255,0.18)",
         borderRadius: "6px",
         color: "white",
