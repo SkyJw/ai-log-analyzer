@@ -1,18 +1,18 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Activity } from "lucide-react";
 import React from "react";
 import ReactDOM from "react-dom/client";
+
+import { AppLayout } from "./components/AppLayout";
+import { TaskListPage } from "./pages/TaskListPage";
 
 const queryClient = new QueryClient();
 
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <main style={{ fontFamily: "system-ui, sans-serif", padding: "2rem" }}>
-        <Activity aria-hidden="true" size={32} />
-        <h1>AI Log Analyzer</h1>
-        <p>Communication board boot log reconstruction and AI diagnosis.</p>
-      </main>
+      <AppLayout>
+        <TaskListPage />
+      </AppLayout>
     </QueryClientProvider>
   );
 }

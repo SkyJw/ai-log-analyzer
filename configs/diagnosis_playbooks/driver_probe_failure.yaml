@@ -1,0 +1,30 @@
+id: driver_probe_failure
+name: Linux driver probe failure diagnosis
+version: 1.0.0
+status: active
+applicable_sources:
+  - kernel
+  - device_tree
+  - board_config
+required_evidence:
+  - driver name
+  - probe error code
+  - device tree node
+  - bus access result
+analysis_steps:
+  - Identify which boot session and stage contains the probe failure.
+  - Extract driver name, device node, error code, and bus access result.
+  - Check power/reset/clock/pinmux/address/compatible evidence.
+common_causes:
+  - device access timeout
+  - missing power or reset sequencing
+  - device tree mismatch
+next_checks:
+  - 检查 power/reset/clock/pinmux
+  - 补充设备树节点和总线访问日志
+output_requirements:
+  - direct evidence
+  - suspected root cause order
+  - next checks
+related_log_types:
+  - kernel_history_log

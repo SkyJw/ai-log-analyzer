@@ -1,0 +1,27 @@
+id: boot_region_abnormal
+name: Boot region abnormal diagnosis
+version: 1.0.0
+status: active
+applicable_sources:
+  - bootloader
+  - kernel
+required_evidence:
+  - actual boot region
+  - expected boot region
+  - image validation result
+analysis_steps:
+  - Compare actual boot region with expected boot region.
+  - Check upgrade success, image validation, fallback, reset, and kernel cmdline evidence.
+common_causes:
+  - image validation failure
+  - automatic fallback
+  - wrong boot environment
+next_checks:
+  - 补充 bootloader 环境变量和升级日志
+output_requirements:
+  - direct evidence
+  - likely root causes
+  - next checks
+related_log_types:
+  - bootloader_current_log
+  - kernel_history_log

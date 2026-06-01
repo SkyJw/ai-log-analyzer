@@ -1,0 +1,26 @@
+id: userspace_service_startup
+name: Userspace service startup diagnosis
+version: 1.0.0
+status: active
+applicable_sources:
+  - userspace
+  - board_service
+required_evidence:
+  - service name
+  - startup status
+  - dependency status
+analysis_steps:
+  - Identify failed service and dependency order.
+  - Compare service logs with kernel and board service readiness.
+common_causes:
+  - missing device node
+  - dependency startup timeout
+  - wrong runtime configuration
+next_checks:
+  - 补充 systemd 状态和板级服务日志
+output_requirements:
+  - direct evidence
+  - dependency chain
+  - next checks
+related_log_types:
+  - userspace_startup_log

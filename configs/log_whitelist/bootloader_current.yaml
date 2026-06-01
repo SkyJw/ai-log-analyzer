@@ -1,0 +1,20 @@
+id: bootloader_current_log
+name: Current bootloader log
+path_patterns:
+  - "**/boot*.log"
+  - "**/uboot*.log"
+  - "**/u-boot*.log"
+source_type: bootloader
+parser: plain_text_log
+scope_strategy: current_snapshot_only
+boot_split_markers:
+  - "U-Boot"
+  - "Hit any key to stop autoboot"
+max_boot_sessions: 1
+max_size_mb: 10
+extractors:
+  - boot_stage
+  - boot_region
+  - image_validation
+related_playbooks:
+  - boot_region_abnormal
