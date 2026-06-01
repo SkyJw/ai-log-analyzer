@@ -1,0 +1,36 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - .env.example
+    environment:
+      AI_LOG_ANALYZER_STORAGE_DIR: /app/backend/data/storage
+      AI_LOG_ANALYZER_DATABASE_URL: sqlite:////app/backend/data/ai_log_analyzer.db
+    ports:
+      - "8000:8000"
+    volumes:
+      - ai_log_analyzer_data:/app/backend/data
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).read()"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  ai_log_analyzer_data:

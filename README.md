@@ -112,3 +112,16 @@ cd ..\frontend
 npm test -- --run
 npm run build
 ```
+
+## Deployment
+
+Docker Compose deployment files are included for an intranet MVP environment:
+
+- `docker-compose.yml`
+- `backend/Dockerfile`
+- `frontend/Dockerfile`
+- `frontend/nginx.conf`
+- `.env.example`
+
+See `docs/deployment.md` for deployment prerequisites, environment variables,
+health checks, demo upload, data volume backup, and operational notes.
