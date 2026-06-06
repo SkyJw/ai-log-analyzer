@@ -37,6 +37,10 @@ export type AnalysisTask = {
   task_id: string;
   question: string;
   status: string;
+  current_stage?: string | null;
+  progress_percent: number;
+  status_message?: string | null;
+  error_message?: string | null;
   package_type?: string | null;
   snapshot_count: number;
   final_answer?: string | null;

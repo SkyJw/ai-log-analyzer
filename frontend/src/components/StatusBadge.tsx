@@ -6,7 +6,14 @@ const statusColors: Record<string, { background: string; color: string }> = {
   completed: { background: "#dcfce7", color: "#166534" },
   failed: { background: "#fee2e2", color: "#991b1b" },
   running: { background: "#dbeafe", color: "#1e40af" },
-  pending: { background: "#fef3c7", color: "#92400e" },
+  queued: { background: "#fef3c7", color: "#92400e" },
+};
+
+const statusLabels: Record<string, string> = {
+  completed: "已完成",
+  failed: "失败",
+  queued: "排队中",
+  running: "分析中",
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {
@@ -14,20 +21,13 @@ export function StatusBadge({ status }: StatusBadgeProps) {
 
   return (
     <span
+      className="status-badge"
       style={{
         background: colors.background,
-        borderRadius: "999px",
         color: colors.color,
-        display: "inline-block",
-        fontSize: "0.75rem",
-        fontWeight: 700,
-        lineHeight: 1,
-        minWidth: "72px",
-        padding: "0.35rem 0.5rem",
-        textAlign: "center",
       }}
     >
-      {status}
+      {statusLabels[status] ?? status}
     </span>
   );
 }

@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
 import { AppLayout } from "../components/AppLayout";
@@ -10,11 +11,14 @@ vi.mock("../api/tasks", () => ({
   listTasks: vi.fn(async () => [
     {
       task_id: "task-1",
-      question: "鍗囩骇鍚庝负浠€涔堟病鏈夋甯稿惎鍔紵",
-      status: "completed",
-      package_type: "single_snapshot_archive",
-      snapshot_count: 1,
-      final_answer: "fake answer",
+      question: "升级后为什么没有正常启动？",
+      status: "running",
+      current_stage: "run_diagnosis",
+      progress_percent: 78,
+      status_message: "正在执行诊断模板",
+      package_type: null,
+      snapshot_count: 0,
+      final_answer: null,
       boot_sessions: [],
       diagnosis_findings: [],
       created_at: "2026-06-01T00:00:00Z",
@@ -22,21 +26,30 @@ vi.mock("../api/tasks", () => ({
   ]),
 }));
 
-function renderWithQuery(ui: React.ReactElement) {
+function renderWithProviders(ui: React.ReactElement) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>,
+  );
 }
 
 describe("TaskListPage", () => {
-  it("renders engineering navigation and task list data", async () => {
+  it("renders navigation, running task data, and progress action", async () => {
     const onReviewTask = vi.fn();
+    const onViewProgress = vi.fn();
     const onViewResult = vi.fn();
 
-    renderWithQuery(
+    renderWithProviders(
       <AppLayout>
-        <TaskListPage onReviewTask={onReviewTask} onViewResult={onViewResult} />
+        <TaskListPage
+          onReviewTask={onReviewTask}
+          onViewProgress={onViewProgress}
+          onViewResult={onViewResult}
+        />
       </AppLayout>,
     );
 
@@ -44,16 +57,15 @@ describe("TaskListPage", () => {
     expect(screen.getByRole("navigation")).toHaveTextContent("新建分析");
     expect(screen.getByRole("navigation")).toHaveTextContent("已入库案例");
 
-    expect(await screen.findByText("鍗囩骇鍚庝负浠€涔堟病鏈夋甯稿惎鍔紵")).toBeInTheDocument();
-    expect(screen.getByText("completed")).toBeInTheDocument();
-    expect(screen.getByText("single_snapshot_archive")).toBeInTheDocument();
-    expect(screen.getByText("1")).toBeInTheDocument();
-    expect(screen.getByText("未入库")).toBeInTheDocument();
+    expect(await screen.findByText("升级后为什么没有正常启动？")).toBeInTheDocument();
+    expect(screen.getByText("分析中")).toBeInTheDocument();
+    expect(screen.getByText("正在执行诊断模板")).toBeInTheDocument();
+    expect(screen.getByText("78%")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "查看结果" }));
-    fireEvent.click(screen.getByRole("button", { name: "审核入库" }));
+    fireEvent.click(screen.getByRole("button", { name: "查看进度" }));
 
-    expect(onViewResult).toHaveBeenCalledWith("task-1");
-    expect(onReviewTask).toHaveBeenCalledWith("task-1");
+    expect(onViewProgress).toHaveBeenCalledWith("task-1");
+    expect(onViewResult).not.toHaveBeenCalled();
+    expect(onReviewTask).not.toHaveBeenCalled();
   });
 });

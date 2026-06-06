@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
+from threading import RLock
 from typing import BinaryIO
 from uuid import uuid4
 
@@ -44,27 +46,51 @@ class InMemoryTaskStore:
     def __init__(self) -> None:
         self.tasks: dict[str, AnalysisTaskRecord] = {}
         self.cases: dict[str, ApprovedCaseView] = {}
+        self._lock = RLock()
 
     def add_task(self, record: AnalysisTaskRecord) -> None:
-        self.tasks[record.task.task_id] = record
+        with self._lock:
+            self.tasks[record.task.task_id] = record
 
     def list_tasks(self) -> list[AnalysisTaskView]:
-        return [record.task for record in self.tasks.values()]
+        with self._lock:
+            return [record.task.model_copy(deep=True) for record in self.tasks.values()]
 
     def get_record(self, task_id: str) -> AnalysisTaskRecord | None:
-        return self.tasks.get(task_id)
+        with self._lock:
+            return self.tasks.get(task_id)
+
+    def get_task_view(self, task_id: str) -> AnalysisTaskView | None:
+        with self._lock:
+            record = self.tasks.get(task_id)
+            if record is None:
+                return None
+            return record.task.model_copy(deep=True)
+
+    def update_task(self, task_id: str, **updates: object) -> AnalysisTaskView | None:
+        with self._lock:
+            record = self.tasks.get(task_id)
+            if record is None:
+                return None
+            for key, value in updates.items():
+                setattr(record.task, key, value)
+            record.task.updated_at = datetime.now(UTC)
+            return record.task.model_copy(deep=True)
 
     def add_case(self, approved_case: ApprovedCaseView) -> None:
-        self.cases[approved_case.case_id] = approved_case
+        with self._lock:
+            self.cases[approved_case.case_id] = approved_case
 
     def list_cases(self) -> list[ApprovedCaseView]:
-        return list(self.cases.values())
+        with self._lock:
+            return [case.model_copy(deep=True) for case in self.cases.values()]
 
 
 class TaskRunner:
     def __init__(self, store: InMemoryTaskStore | None = None) -> None:
         self.settings = get_settings()
         self.store = store or InMemoryTaskStore()
+        self.executor = ThreadPoolExecutor(max_workers=2)
         self.project_root = Path(__file__).resolve().parents[3]
         self.whitelist_service = LogWhitelistService.from_directory(
             self.project_root / "configs" / "log_whitelist"
@@ -85,13 +111,55 @@ class TaskRunner:
         archive_path = task_dir / archive_filename
         archive_path.write_bytes(archive_stream.read())
 
+        task = AnalysisTaskView(
+            task_id=task_id,
+            question=payload.question,
+            status="queued",
+            current_stage="save_upload",
+            progress_percent=5,
+            status_message="已保存上传文件，等待开始分析",
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        self.store.add_task(AnalysisTaskRecord(task=task))
+        response_task = task.model_copy(deep=True)
+        self.executor.submit(self.run_task_analysis, task_id, payload, archive_path, task_dir)
+        return response_task
+
+    def run_task_analysis(
+        self,
+        task_id: str,
+        payload: AnalysisTaskCreate,
+        archive_path: Path,
+        task_dir: Path,
+    ) -> None:
+        try:
+            self._update_progress(task_id, "extract_archive", 12, "正在解压日志包")
+            self._run_task_analysis(task_id, payload, archive_path, task_dir)
+        except Exception as exc:  # noqa: BLE001 - keep failed tasks queryable for the UI.
+            self.store.update_task(
+                task_id,
+                status="failed",
+                error_message=str(exc),
+                status_message="分析失败",
+            )
+
+    def _run_task_analysis(
+        self,
+        task_id: str,
+        payload: AnalysisTaskCreate,
+        archive_path: Path,
+        task_dir: Path,
+    ) -> None:
         archive_result = ArchiveService().inspect_and_extract(archive_path, task_dir / "extract")
         classifications: list[FileClassification] = []
         all_segments: list[CandidateSegment] = []
         snapshot_segments: dict[int, list[CandidateSegment]] = {}
 
+        self._update_progress(task_id, "detect_package", 25, "正在识别输入包类型")
         for snapshot in archive_result.snapshots:
             segments_for_snapshot: list[CandidateSegment] = []
+            self._update_progress(task_id, "match_whitelist", 40, "正在匹配白名单日志")
             for extracted_file in snapshot.extracted_files:
                 classification = self.whitelist_service.classify_path(extracted_file.path)
                 classifications.append(classification)
@@ -100,7 +168,9 @@ class TaskRunner:
                 all_segments.extend(file_segments)
             snapshot_segments[snapshot.snapshot_index] = segments_for_snapshot
 
+        self._update_progress(task_id, "reconstruct_boot", 60, "正在重建启动过程")
         boot_sessions = BootReconstructionService().reconstruct(snapshot_segments)
+        self._update_progress(task_id, "run_diagnosis", 78, "正在执行诊断模板")
         diagnosis_result = DiagnosisWorkflow(
             playbook_service=self.playbook_service,
         ).run(
@@ -109,11 +179,15 @@ class TaskRunner:
             boot_sessions=boot_sessions,
             classifications=classifications,
         )
+        self._update_progress(task_id, "generate_answer", 92, "正在生成用户回答")
 
-        task = AnalysisTaskView(
-            task_id=task_id,
-            question=payload.question,
+        self.store.update_task(
+            task_id,
             status="completed",
+            current_stage="completed",
+            progress_percent=100,
+            status_message="分析完成",
+            error_message=None,
             package_type=archive_result.package_type,
             snapshot_count=len(archive_result.snapshots),
             final_answer=diagnosis_result.final_answer,
@@ -122,17 +196,26 @@ class TaskRunner:
                 self._diagnosis_finding_view(finding, all_segments)
                 for finding in diagnosis_result.findings
             ],
-            created_at=datetime.now(UTC),
-            updated_at=datetime.now(UTC),
         )
-        self.store.add_task(
-            AnalysisTaskRecord(
-                task=task,
-                classifications=classifications,
-                segments=all_segments,
-            )
+        record = self.store.get_record(task_id)
+        if record is not None:
+            record.classifications = classifications
+            record.segments = all_segments
+
+    def _update_progress(
+        self,
+        task_id: str,
+        current_stage: str,
+        progress_percent: int,
+        status_message: str,
+    ) -> None:
+        self.store.update_task(
+            task_id,
+            status="running",
+            current_stage=current_stage,
+            progress_percent=progress_percent,
+            status_message=status_message,
         )
-        return task
 
     def answer_follow_up(self, task_id: str, question: str) -> FollowUpMessageView | None:
         record = self.store.get_record(task_id)

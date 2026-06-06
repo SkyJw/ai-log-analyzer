@@ -1,5 +1,7 @@
 import "@testing-library/jest-dom/vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createFollowUp, getTask } from "../api/tasks";
@@ -10,6 +12,9 @@ vi.mock("../api/tasks", () => ({
     task_id: "task-1",
     question: "升级后为什么没有正常启动？",
     status: "completed",
+    current_stage: "completed",
+    progress_percent: 100,
+    status_message: "分析完成",
     snapshot_count: 1,
     final_answer: "直接回答：kernel 阶段驱动 probe 失败。",
     boot_sessions: [
@@ -57,6 +62,17 @@ vi.mock("../api/tasks", () => ({
   })),
 }));
 
+function renderWithProviders(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
+
 describe("TaskResultPage", () => {
   afterEach(() => {
     cleanup();
@@ -64,7 +80,7 @@ describe("TaskResultPage", () => {
   });
 
   it("renders final answer, boot table, findings, evidence, and follow-up input", async () => {
-    render(<TaskResultPage taskId="task-1" />);
+    renderWithProviders(<TaskResultPage taskId="task-1" />);
 
     expect(await screen.findByText("直接回答：kernel 阶段驱动 probe 失败。")).toBeInTheDocument();
     expect(screen.getByText("最近第 1 次启动")).toBeInTheDocument();
@@ -84,7 +100,7 @@ describe("TaskResultPage", () => {
   });
 
   it("loads task by id", async () => {
-    render(<TaskResultPage taskId="task-1" />);
+    renderWithProviders(<TaskResultPage taskId="task-1" />);
 
     await waitFor(() => expect(getTask).toHaveBeenCalledWith("task-1"));
   });
