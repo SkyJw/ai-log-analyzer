@@ -1,8 +1,9 @@
 import "@testing-library/jest-dom/vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createTask } from "../api/tasks";
+import { createTask, getTask } from "../api/tasks";
 import { NewTaskPage } from "./NewTaskPage";
 import { TaskProgressPage } from "./TaskProgressPage";
 
@@ -10,12 +11,33 @@ vi.mock("../api/tasks", () => ({
   createTask: vi.fn(async () => ({
     task_id: "task-1",
     question: "why",
-    status: "completed",
-    snapshot_count: 1,
+    status: "queued",
+    current_stage: "save_upload",
+    progress_percent: 5,
+    status_message: "已保存上传文件，等待开始分析",
+    snapshot_count: 0,
+    boot_sessions: [],
+    diagnosis_findings: [],
+  })),
+  getTask: vi.fn(async () => ({
+    task_id: "task-1",
+    question: "why",
+    status: "running",
+    current_stage: "match_whitelist",
+    progress_percent: 40,
+    status_message: "正在匹配白名单日志",
+    snapshot_count: 0,
     boot_sessions: [],
     diagnosis_findings: [],
   })),
 }));
+
+function renderWithQuery(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 describe("NewTaskPage", () => {
   afterEach(() => {
@@ -68,16 +90,17 @@ describe("NewTaskPage", () => {
 });
 
 describe("TaskProgressPage", () => {
-  it("renders ordered analysis stages", () => {
-    render(<TaskProgressPage currentStageIndex={2} snapshotCount={3} />);
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
 
-    expect(screen.getByText("解压日志包")).toBeInTheDocument();
-    expect(screen.getByText("识别输入包类型")).toBeInTheDocument();
-    expect(screen.getByText("已识别 3 次启动快照")).toBeInTheDocument();
-    expect(screen.getByText("匹配白名单日志")).toBeInTheDocument();
-    expect(screen.getByText("重建启动过程")).toBeInTheDocument();
-    expect(screen.getByText("执行诊断模板")).toBeInTheDocument();
-    expect(screen.getByText("回答用户问题")).toBeInTheDocument();
-    expect(screen.getByText("分析完成")).toBeInTheDocument();
+  it("polls and renders the real task progress stage", async () => {
+    renderWithQuery(<TaskProgressPage taskId="task-1" />);
+
+    expect(await screen.findByRole("heading", { name: "分析进度" })).toBeInTheDocument();
+    expect(await screen.findByText("正在匹配白名单日志")).toBeInTheDocument();
+    expect(screen.getByText("40%")).toBeInTheDocument();
+    expect(getTask).toHaveBeenCalledWith("task-1");
   });
 });

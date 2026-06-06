@@ -16,7 +16,7 @@ export function EvidenceSnippet({ evidence }: EvidenceSnippetProps) {
     <article
       style={{
         border: "1px solid #e5e7eb",
-        borderRadius: "8px",
+        borderRadius: "6px",
         display: "grid",
         gap: "0.45rem",
         padding: "0.8rem",
@@ -45,19 +45,7 @@ export function EvidenceSnippet({ evidence }: EvidenceSnippetProps) {
           {evidence.strength}
         </span>
       </div>
-      <pre
-        style={{
-          background: "#f9fafb",
-          borderRadius: "6px",
-          color: "#172033",
-          fontFamily: "ui-monospace, SFMono-Regular, Consolas, monospace",
-          fontSize: "0.82rem",
-          margin: 0,
-          overflowX: "auto",
-          padding: "0.65rem",
-          whiteSpace: "pre-wrap",
-        }}
-      >
+      <pre className="evidence-block">
         {evidence.content}
       </pre>
     </article>

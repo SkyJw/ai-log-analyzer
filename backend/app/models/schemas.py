@@ -57,6 +57,10 @@ class AnalysisTaskView(BaseModel):
     task_id: str
     question: str
     status: str
+    current_stage: str | None = None
+    progress_percent: int = 0
+    status_message: str | None = None
+    error_message: str | None = None
     package_type: str | None = None
     snapshot_count: int = 0
     final_answer: str | None = None

@@ -35,10 +35,10 @@ def list_tasks() -> list[AnalysisTaskView]:
 
 @router.get("/{task_id}", response_model=AnalysisTaskView)
 def get_task(task_id: str) -> AnalysisTaskView:
-    record = task_runner.store.get_record(task_id)
-    if record is None:
+    task = task_runner.store.get_task_view(task_id)
+    if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
-    return record.task
+    return task
 
 
 class FollowUpResponse(BaseModel):

@@ -1,162 +1,119 @@
-import { Eye, ShieldCheck } from "lucide-react";
+import { Eye, LoaderCircle, ShieldCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { listTasks } from "../api/tasks";
 import { StatusBadge } from "../components/StatusBadge";
+import { Button, EmptyState, ErrorState, LoadingState, PageHeader } from "../components/ui";
+import type { AnalysisTask } from "../types";
 
 type TaskListPageProps = {
   onReviewTask?: (taskId: string) => void;
+  onViewProgress?: (taskId: string) => void;
   onViewResult?: (taskId: string) => void;
 };
 
-export function TaskListPage({ onReviewTask, onViewResult }: TaskListPageProps) {
+export function TaskListPage({ onReviewTask, onViewProgress, onViewResult }: TaskListPageProps) {
   const { data: tasks = [], isLoading, error } = useQuery({
     queryKey: ["tasks"],
     queryFn: listTasks,
+    refetchInterval: (query) => {
+      const items = query.state.data ?? [];
+      return items.some((task) => task.status === "queued" || task.status === "running")
+        ? 1500
+        : false;
+    },
   });
 
   if (isLoading) {
-    return <p>加载中</p>;
+    return <LoadingState label="正在加载任务..." />;
   }
 
   if (error) {
-    return <p>加载失败</p>;
+    return <ErrorState label="任务列表加载失败" />;
   }
 
   return (
     <section>
-      <div
-        style={{
-          alignItems: "center",
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: "1rem",
-        }}
-      >
-        <h1 style={{ fontSize: "1.35rem", margin: 0 }}>分析任务</h1>
-      </div>
-      <div
-        style={{
-          background: "white",
-          border: "1px solid #e5e7eb",
-          borderRadius: "8px",
-          overflowX: "auto",
-        }}
-      >
-        <table style={{ borderCollapse: "collapse", minWidth: "960px", width: "100%" }}>
-          <thead style={{ background: "#f9fafb" }}>
-            <tr>
-              <HeaderCell>问题摘要</HeaderCell>
-              <HeaderCell>状态</HeaderCell>
-              <HeaderCell>包类型</HeaderCell>
-              <HeaderCell>快照数</HeaderCell>
-              <HeaderCell>创建时间</HeaderCell>
-              <HeaderCell>入库状态</HeaderCell>
-              <HeaderCell>操作</HeaderCell>
-            </tr>
-          </thead>
-          <tbody>
-            {tasks.map((task) => (
-              <tr key={task.task_id}>
-                <BodyCell>{task.question}</BodyCell>
-                <BodyCell>
-                  <StatusBadge status={task.status} />
-                </BodyCell>
-                <BodyCell>{task.package_type ?? "-"}</BodyCell>
-                <BodyCell>{task.snapshot_count}</BodyCell>
-                <BodyCell>{formatDate(task.created_at)}</BodyCell>
-                <BodyCell>未入库</BodyCell>
-                <BodyCell>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-                    <RowAction label="查看结果" icon={<Eye size={15} />} onClick={() => onViewResult?.(task.task_id)} />
-                    <RowAction
-                      label="审核入库"
-                      icon={<ShieldCheck size={15} />}
-                      onClick={() => onReviewTask?.(task.task_id)}
-                    />
-                  </div>
-                </BodyCell>
-              </tr>
-            ))}
-            {tasks.length === 0 ? (
+      <PageHeader
+        title="分析任务"
+        description="查看日志分析任务状态，运行中的任务可进入真实进度页。"
+      />
+      {tasks.length === 0 ? (
+        <EmptyState label="暂无任务，请先新建一次日志分析。" />
+      ) : (
+        <div className="table-wrap">
+          <table>
+            <thead>
               <tr>
-                <BodyCell colSpan={7}>暂无任务</BodyCell>
+                <th>问题摘要</th>
+                <th>状态</th>
+                <th>当前阶段</th>
+                <th>进度</th>
+                <th>包类型</th>
+                <th>快照数</th>
+                <th>创建时间</th>
+                <th>操作</th>
               </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {tasks.map((task) => (
+                <tr key={task.task_id}>
+                  <td>{task.question}</td>
+                  <td><StatusBadge status={task.status} /></td>
+                  <td>{task.status_message ?? stageLabel(task.current_stage)}</td>
+                  <td>{task.progress_percent ?? 0}%</td>
+                  <td>{task.package_type ?? "-"}</td>
+                  <td>{task.snapshot_count}</td>
+                  <td>{formatDate(task.created_at)}</td>
+                  <td>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                      {isActive(task) ? (
+                        <Button onClick={() => onViewProgress?.(task.task_id)} type="button">
+                          <LoaderCircle size={15} />
+                          <span>查看进度</span>
+                        </Button>
+                      ) : (
+                        <Button onClick={() => onViewResult?.(task.task_id)} type="button">
+                          <Eye size={15} />
+                          <span>查看结果</span>
+                        </Button>
+                      )}
+                      <Button
+                        disabled={task.status !== "completed"}
+                        onClick={() => onReviewTask?.(task.task_id)}
+                        type="button"
+                      >
+                        <ShieldCheck size={15} />
+                        <span>审核入库</span>
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }
 
-function HeaderCell({ children }: { children: React.ReactNode }) {
-  return (
-    <th
-      style={{
-        borderBottom: "1px solid #e5e7eb",
-        color: "#4b5563",
-        fontSize: "0.78rem",
-        padding: "0.75rem",
-        textAlign: "left",
-      }}
-    >
-      {children}
-    </th>
-  );
+function isActive(task: AnalysisTask) {
+  return task.status === "queued" || task.status === "running";
 }
 
-function BodyCell({
-  children,
-  colSpan,
-}: {
-  children: React.ReactNode;
-  colSpan?: number;
-}) {
-  return (
-    <td
-      colSpan={colSpan}
-      style={{
-        borderBottom: "1px solid #f3f4f6",
-        fontSize: "0.9rem",
-        padding: "0.8rem 0.75rem",
-        verticalAlign: "top",
-      }}
-    >
-      {children}
-    </td>
-  );
-}
-
-function RowAction({
-  icon,
-  label,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        alignItems: "center",
-        background: "white",
-        border: "1px solid #d1d5db",
-        borderRadius: "6px",
-        color: "#172033",
-        display: "inline-flex",
-        gap: "0.3rem",
-        minHeight: "32px",
-        padding: "0.3rem 0.55rem",
-      }}
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
-  );
+function stageLabel(stage?: string | null) {
+  const labels: Record<string, string> = {
+    save_upload: "保存上传",
+    extract_archive: "解压日志包",
+    detect_package: "识别输入包类型",
+    match_whitelist: "匹配白名单日志",
+    reconstruct_boot: "重建启动过程",
+    run_diagnosis: "执行诊断模板",
+    generate_answer: "生成用户回答",
+    completed: "分析完成",
+  };
+  return stage ? labels[stage] ?? stage : "-";
 }
 
 function formatDate(value?: string | null) {

@@ -1,0 +1,301 @@
+:root {
+  color: #172033;
+  background: #f4f6f9;
+  font-family:
+    Inter, "Microsoft YaHei", "PingFang SC", ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: #f4f6f9;
+}
+
+.app-header {
+  align-items: center;
+  background: #172033;
+  color: white;
+  display: flex;
+  gap: 1.5rem;
+  min-height: 56px;
+  padding: 0 1.25rem;
+}
+
+.app-brand {
+  font-size: 0.98rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.app-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.nav-link {
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  color: white;
+  display: inline-flex;
+  gap: 0.4rem;
+  min-height: 34px;
+  padding: 0.35rem 0.65rem;
+  text-decoration: none;
+}
+
+.nav-link.active {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.app-main {
+  margin: 0 auto;
+  max-width: 1240px;
+  padding: 1.15rem;
+}
+
+.page-header {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.page-header h1 {
+  font-size: 1.28rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.page-header p {
+  color: #5f6b7a;
+  font-size: 0.9rem;
+  margin: 0.35rem 0 0;
+}
+
+.panel {
+  background: white;
+  border: 1px solid #dfe5ec;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.panel h2 {
+  font-size: 0.98rem;
+  margin: 0 0 0.75rem;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.two-column {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+}
+
+.form-grid {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.field span {
+  color: #354052;
+  font-size: 0.83rem;
+  font-weight: 700;
+}
+
+.field input,
+.field textarea {
+  border: 1px solid #cfd7e3;
+  border-radius: 6px;
+  min-height: 36px;
+  padding: 0.55rem 0.65rem;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.button {
+  align-items: center;
+  border: 1px solid #b8c2d0;
+  border-radius: 6px;
+  background: white;
+  color: #172033;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 0.4rem;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0.45rem 0.75rem;
+}
+
+.button.primary {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: white;
+}
+
+.button.danger {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  color: white;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
+.table-wrap {
+  background: white;
+  border: 1px solid #dfe5ec;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  min-width: 920px;
+  width: 100%;
+}
+
+th,
+td {
+  border-bottom: 1px solid #eef2f6;
+  font-size: 0.88rem;
+  padding: 0.72rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #f8fafc;
+  color: #5f6b7a;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.status-badge {
+  border-radius: 999px;
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+  min-width: 72px;
+  padding: 0.35rem 0.5rem;
+  text-align: center;
+}
+
+.muted {
+  color: #64748b;
+}
+
+.alert {
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #991b1b;
+  padding: 0.7rem 0.8rem;
+}
+
+.progress-bar {
+  background: #e5eaf0;
+  border-radius: 999px;
+  height: 9px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  background: #0f766e;
+  height: 100%;
+  transition: width 160ms ease;
+}
+
+.progress-list {
+  display: grid;
+  gap: 0.55rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.progress-step {
+  align-items: center;
+  color: #64748b;
+  display: flex;
+  gap: 0.55rem;
+}
+
+.progress-step.done,
+.progress-step.current {
+  color: #172033;
+  font-weight: 700;
+}
+
+.step-dot {
+  align-items: center;
+  background: #d9e2ec;
+  border-radius: 999px;
+  color: #334155;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+}
+
+.progress-step.done .step-dot,
+.progress-step.current .step-dot {
+  background: #0f766e;
+  color: white;
+}
+
+.evidence-block {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #172033;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.82rem;
+  margin: 0;
+  overflow-x: auto;
+  padding: 0.65rem;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 860px) {
+  .app-header,
+  .page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .two-column {
+    grid-template-columns: 1fr;
+  }
+}
